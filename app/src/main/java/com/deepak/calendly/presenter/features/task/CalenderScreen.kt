@@ -56,7 +56,6 @@ fun CalendarScreen(navController: NavController) {
     val calendar = Calendar.getInstance()
     val currentMonth = remember { mutableStateOf(calendar.time) }
 
-    // Use rememberSaveable to persist selectedDate across screen navigation
     val selectedDate = rememberSaveable { mutableStateOf<Date?>(null) }
 
     val events = remember {
@@ -66,7 +65,7 @@ fun CalendarScreen(navController: NavController) {
     val todayTasksLoaded = remember { mutableStateOf(false) }
 
     val onDateClick: (Date) -> Unit = { clickedDate ->
-        selectedDate.value = clickedDate // Store the selected date
+        selectedDate.value = clickedDate
         val formattedDate = formatDate(clickedDate)
         viewModel.getCalenderTaskLists(formattedDate, 8209)
     }
@@ -104,7 +103,7 @@ fun CalendarScreen(navController: NavController) {
         startFromSunday = true,
         viewmodel = viewModel,
         navController = navController,
-        selectedDate = selectedDate.value, // Pass selectedDate to CalendarView
+        selectedDate = selectedDate.value,
         modifier = Modifier.fillMaxSize()
     )
 }
@@ -297,13 +296,19 @@ fun CalendarView(
     startFromSunday: Boolean,
     viewmodel: TaskViewmodel,
     navController: NavController,
-    selectedDate: Date?,  // Receive the selected date
+    selectedDate: Date?,
     modifier: Modifier = Modifier
 ) {
     selectedDate?.let {
         val formattedDate = formatDate(it)
         viewmodel.getCalenderTaskLists(formattedDate, 8209)
     }
+
+    val today = Calendar.getInstance().time
+    val isToday = selectedDate?.let {
+        SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(it) ==
+                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+    } ?: false
 
     Column(modifier = modifier) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -345,7 +350,7 @@ fun CalendarView(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        TaskHeader(selectedDate = selectedDate, onAddTaskClicked = { date ->
+        TaskHeader(selectedDate = selectedDate, isToday = isToday, onAddTaskClicked = { date ->
             val formattedDate = date?.let { formatDate(it) } ?: formatDate(Date())
             navController.navigate(NavigationItem.AddTask.createRoute(formattedDate))
         })
@@ -432,7 +437,8 @@ fun getDatesInMonth(month: Date): List<Pair<Date, Boolean>> {
 @Composable
 fun TaskHeader(
     onAddTaskClicked: (selectedDate: Date?) -> Unit,
-    selectedDate: Date?
+    selectedDate: Date?,
+    isToday: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -446,7 +452,7 @@ fun TaskHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Daily Tasks",
+            text = if (isToday) "Daily Tasks" else "Tasks",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White,
             modifier = Modifier.weight(1f)
