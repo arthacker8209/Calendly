@@ -6,8 +6,6 @@
 It simply loads **Tasks** data from API with Selected Date
 - Clean and Simple UI.
 
-API is used in this app. - https://api.pokemontcg.io *.
-
 
 ## Built With 🛠
 - [Kotlin](https://kotlinlang.org/) - First class and official programming language for Android development.
