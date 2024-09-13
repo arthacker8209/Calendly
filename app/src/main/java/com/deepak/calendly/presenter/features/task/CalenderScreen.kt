@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +56,9 @@ fun CalendarScreen(navController: NavController) {
     val calendar = Calendar.getInstance()
     val currentMonth = remember { mutableStateOf(calendar.time) }
 
+    // Use rememberSaveable to persist selectedDate across screen navigation
+    val selectedDate = rememberSaveable { mutableStateOf<Date?>(null) }
+
     val events = remember {
         mutableStateOf(getDatesInMonth(currentMonth.value))
     }
@@ -62,6 +66,7 @@ fun CalendarScreen(navController: NavController) {
     val todayTasksLoaded = remember { mutableStateOf(false) }
 
     val onDateClick: (Date) -> Unit = { clickedDate ->
+        selectedDate.value = clickedDate // Store the selected date
         val formattedDate = formatDate(clickedDate)
         viewModel.getCalenderTaskLists(formattedDate, 8209)
     }
@@ -99,6 +104,7 @@ fun CalendarScreen(navController: NavController) {
         startFromSunday = true,
         viewmodel = viewModel,
         navController = navController,
+        selectedDate = selectedDate.value, // Pass selectedDate to CalendarView
         modifier = Modifier.fillMaxSize()
     )
 }
@@ -158,6 +164,7 @@ private fun CalendarCell(
 }
 
 
+
 private fun Int.getDayOfWeek3Letters(): String? = Calendar.getInstance().apply {
     set(Calendar.DAY_OF_WEEK, this@getDayOfWeek3Letters)
 }.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault())
@@ -189,6 +196,7 @@ private fun CalendarGrid(
     val today = Calendar.getInstance().time
     val weekdayFirstDay = date.first().first.day
     val weekdays = getWeekDays(startFromSunday)
+
     CalendarCustomLayout(modifier = modifier) {
         weekdays.forEach {
             WeekdayCell(weekday = it)
@@ -199,11 +207,15 @@ private fun CalendarGrid(
         date.forEach {
             val isToday = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(it.first) ==
                     SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+            val isSelected = viewmodel.selectedDate?.let { selectedDate ->
+                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(it.first) ==
+                        SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(selectedDate)
+            } ?: false
             CalendarCell(
                 date = it.first,
                 isToday = isToday,
                 signal = it.second,
-                selected = it.first == viewmodel.selectedDate,
+                selected = isSelected,
                 onClick = {
                     viewmodel.updateSelectedDate(it.first)
                     onClick(it.first)
@@ -212,6 +224,7 @@ private fun CalendarGrid(
         }
     }
 }
+
 
 
 fun getWeekDays(startFromSunday: Boolean): List<Int> {
@@ -284,11 +297,11 @@ fun CalendarView(
     startFromSunday: Boolean,
     viewmodel: TaskViewmodel,
     navController: NavController,
+    selectedDate: Date?,  // Receive the selected date
     modifier: Modifier = Modifier
 ) {
-
-    viewmodel.selectedDate?.let { selectedDate ->
-        val formattedDate = formatDate(selectedDate)
+    selectedDate?.let {
+        val formattedDate = formatDate(it)
         viewmodel.getCalenderTaskLists(formattedDate, 8209)
     }
 
@@ -325,7 +338,6 @@ fun CalendarView(
         CalendarGrid(
             date = date ?: listOf(),
             onClick = { clickedDate ->
-                viewmodel.updateSelectedDate(clickedDate)
                 onClick(clickedDate)
             },
             startFromSunday = startFromSunday,
@@ -333,8 +345,8 @@ fun CalendarView(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        TaskHeader(viewmodel = viewmodel, onAddTaskClicked = { selectedDate ->
-            val formattedDate = selectedDate?.let { formatDate(it) } ?: formatDate(Date())
+        TaskHeader(selectedDate = selectedDate, onAddTaskClicked = { date ->
+            val formattedDate = date?.let { formatDate(it) } ?: formatDate(Date())
             navController.navigate(NavigationItem.AddTask.createRoute(formattedDate))
         })
         LazyColumn(
@@ -347,7 +359,7 @@ fun CalendarView(
                 taskList?.get(index)?.let { task ->
                     TaskCard(task = task) {
                         viewmodel.deleteTask(userId = 8209, taskId = it)
-                        viewmodel.getCalenderTaskLists(formatDate(viewmodel.selectedDate?: Date()), 8209)
+                        viewmodel.getCalenderTaskLists(formatDate(selectedDate ?: Date()), 8209)
                     }
                 }
             }
@@ -420,7 +432,7 @@ fun getDatesInMonth(month: Date): List<Pair<Date, Boolean>> {
 @Composable
 fun TaskHeader(
     onAddTaskClicked: (selectedDate: Date?) -> Unit,
-    viewmodel: TaskViewmodel
+    selectedDate: Date?
 ) {
     Row(
         modifier = Modifier
@@ -441,7 +453,7 @@ fun TaskHeader(
         )
         IconButton(
             onClick = {
-                onAddTaskClicked(viewmodel.selectedDate)
+                onAddTaskClicked(selectedDate)
             },
             modifier = Modifier
                 .background(
