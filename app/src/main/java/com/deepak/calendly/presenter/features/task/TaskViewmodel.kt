@@ -55,7 +55,7 @@ class TaskViewmodel @Inject constructor(
         }
     }
 
-    fun deleteTask(userId: Int, taskId: Int){
+    fun deleteTask(date: String, userId: Int, taskId: Int){
         viewModelScope.launch(dispatcherProvider.io) {
             when(deleteTask.invoke(userId, taskId)){
                 is Result.Error -> {
@@ -64,6 +64,7 @@ class TaskViewmodel @Inject constructor(
                 is Result.Success -> {
                     withContext(dispatcherProvider.main){
                         _taskDelete.value = true
+                        getCalenderTaskLists(date.toString(), userId)
                     }
                 }
             }

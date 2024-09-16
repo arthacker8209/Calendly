@@ -28,9 +28,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,7 +58,7 @@ fun CalendarScreen(navController: NavController) {
     val calendar = Calendar.getInstance()
     val currentMonth = remember { mutableStateOf(calendar.time) }
 
-    val selectedDate = rememberSaveable { mutableStateOf<Date?>(null) }
+    val selectedDate = rememberSaveable { mutableStateOf<Date?>(Date()) }
 
     val events = remember {
         mutableStateOf(getDatesInMonth(currentMonth.value))
@@ -363,8 +365,7 @@ fun CalendarView(
             items(taskList?.size ?: 0) { index ->
                 taskList?.get(index)?.let { task ->
                     TaskCard(task = task) {
-                        viewmodel.deleteTask(userId = 8209, taskId = it)
-                        viewmodel.getCalenderTaskLists(formatDate(selectedDate ?: Date()), 8209)
+                        viewmodel.deleteTask(date = formatDate(selectedDate ?: Date()), userId = 8209, taskId = it)
                     }
                 }
             }
@@ -374,6 +375,8 @@ fun CalendarView(
 
 @Composable
 fun TaskCard(task: Task, onDeleteClicked: (taskId: Int) -> Unit) {
+    var isDeleteTriggered by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -404,7 +407,10 @@ fun TaskCard(task: Task, onDeleteClicked: (taskId: Int) -> Unit) {
         }
         IconButton(
             onClick = {
-                onDeleteClicked(task.taskId)
+                if (!isDeleteTriggered) {
+                    isDeleteTriggered = true
+                    onDeleteClicked(task.taskId)
+                }
             },
             modifier = Modifier
                 .size(24.dp)

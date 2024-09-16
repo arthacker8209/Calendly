@@ -95,15 +95,15 @@ fun AddTaskScreen(
         OutlinedTextField(
             value = title,
             onValueChange = { newValue ->
-                if (newValue.split(" ").size <= 20) {
+                if (newValue.length <= 50) {
                     title = newValue
                 }
             },
             label = { Text("Title") },
             modifier = Modifier.fillMaxWidth(),
             maxLines = 1,
-            isError = title.split(" ").size > 20,
-            placeholder = { Text("Enter task title (Max 20 words)") },
+            isError = title.length > 50,
+            placeholder = { Text("Enter task title (Max 50 characters)") },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.onBackground
@@ -113,9 +113,9 @@ fun AddTaskScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${title.split(" ").size}/20 words",
+            text = "${title.length}/50 characters",
             style = MaterialTheme.typography.bodyMedium,
-            color = if (title.split(" ").size > 20) Color.Red else Color.Gray
+            color = if (title.length > 50) Color.Red else Color.Gray
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -123,7 +123,7 @@ fun AddTaskScreen(
         OutlinedTextField(
             value = description,
             onValueChange = { newValue ->
-                if (newValue.split(" ").size <= 100) {
+                if (newValue.length <= 200) {
                     description = newValue
                 }
             },
@@ -132,8 +132,8 @@ fun AddTaskScreen(
                 .fillMaxWidth()
                 .height(150.dp),
             maxLines = 5,
-            isError = description.split(" ").size > 100,
-            placeholder = { Text("Enter task description (Max 100 words)") },
+            isError = description.length > 200,
+            placeholder = { Text("Enter task description (Max 200 characters)") },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.onBackground
@@ -143,9 +143,9 @@ fun AddTaskScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${description.split(" ").size}/100 words",
+            text = "${description.length}/200 characters",
             style = MaterialTheme.typography.bodyMedium,
-            color = if (description.split(" ").size > 100) Color.Red else Color.Gray
+            color = if (description.length > 500) Color.Red else Color.Gray
         )
     }
 }
